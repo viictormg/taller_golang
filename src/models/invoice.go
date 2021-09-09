@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"example.com/taller/src/database"
 	"github.com/savsgio/atreugo"
@@ -19,9 +20,20 @@ type Invoice struct {
 func InsertInvoice(FechaCreacion string, PagoTotal float32, IdPromocion int, IdMedicamentos []int, ctx *atreugo.RequestCtx) error {
 	db := database.GetConnection()
 	var invoiceId int
-	query := fmt.Sprintf("insert into factura (fecha_creacion, pago_total, id_promocion) values ('%s', '%f', '%v')", FechaCreacion, PagoTotal, IdPromocion)
+	var IdMedicamentosString string
+	IdMedicamentosString = "array["
 
-	// query := fmt.Sprintf("insert into medicamento(nombre, precio, ubicacion) values ('%s', %f, '%s') returning id", nombre, precio, ubicacion)
+	for i := 0; i < len(IdMedicamentos); i++ {
+		coma := ","
+		if i == len(IdMedicamentos)-1 {
+			coma = ""
+		}
+		IdMedicamentosString += strconv.Itoa(IdMedicamentos[i]) + coma
+	}
+	IdMedicamentosString += "]"
+
+	query := fmt.Sprintf("insert into factura (fecha_creacion, pago_total, id_promocion, id_medicamentos) values ('%s', '%f', '%v', %s) returning id", FechaCreacion, PagoTotal, IdPromocion, IdMedicamentosString)
+
 	fmt.Println(query)
 	db.QueryRow(query).Scan(&invoiceId)
 
