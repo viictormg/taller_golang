@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"example.com/taller/src/database"
 	"example.com/taller/src/models"
 	_ "github.com/lib/pq"
@@ -16,28 +19,41 @@ func main() {
 
 	database.GetConnection()
 
-	// fnMiddlewareOne := func(ctx *atreugo.RequestCtx) (int, error) {
-	// 	return fasthttp.StatusOK, nil
-	// }
-
-	// fnMiddlewareTwo := func(ctx *atreugo.RequestCtx) (int, error) {
-	// 	// Disable this middleware if you don't want to see this error
-	// 	return fasthttp.StatusBadRequest, errors.New("Error example")
-	// }
-
-	// server.UseMiddleware(fnMiddlewareOne, fnMiddlewareTwo)
-
-	server.Path("GET", "/", func(ctx *atreugo.RequestCtx) error {
-		return ctx.HTTPResponse("<h1>Atreugo Micro-Framework</h1>")
+	server.Path("POST", "/medicamento", func(ctx *atreugo.RequestCtx) error {
+		var newMedicine models.Medicine
+		err := json.Unmarshal(ctx.PostBody(), &newMedicine)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return models.InsertMedicine(newMedicine.Nombre, newMedicine.Precio, newMedicine.Ubicacion, ctx)
 	})
 
-	server.Path("GET", "/jsonPage", func(ctx *atreugo.RequestCtx) error {
-		return ctx.JSONResponse(atreugo.JSON{"Atreugo": true})
+	server.Path("GET", "/medicamento", func(ctx *atreugo.RequestCtx) error {
+		return models.GetMedicines(ctx)
 	})
-	server.Path("POST", "/createMedicine", func(ctx *atreugo.RequestCtx) error {
-		models.Insert("dolex", 2000, "b1")
-		response := atreugo.JSON{"status": "ok"}
-		return ctx.JSONResponse(response)
+
+	// promociones
+	server.Path("POST", "/promocion", func(ctx *atreugo.RequestCtx) error {
+		var newPromotion models.Promotion
+		err := json.Unmarshal(ctx.PostBody(), &newPromotion)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return models.InsertPromotion(newPromotion.Descripcion, newPromotion.Porcentaje, newPromotion.FechaInicio, newPromotion.FechaFin, ctx)
+	})
+
+	server.Path("GET", "/promocion", func(ctx *atreugo.RequestCtx) error {
+		return models.GetPromotions(ctx)
+	})
+
+	// Facturas
+	server.Path("POST", "/factura", func(ctx *atreugo.RequestCtx) error {
+		var invoice models.Invoice
+		err := json.Unmarshal(ctx.PostBody(), &invoice)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return models.InsertInvoice(invoice.FechaCreacion, invoice.PagoTotal, invoice.IdPromocion, invoice.IdMedicamentos, ctx)
 	})
 
 	err := server.ListenAndServe()
