@@ -5,18 +5,10 @@ import (
 	"net/http"
 
 	"example.com/taller/src/database"
-	"github.com/savsgio/atreugo"
+	"example.com/taller/src/structures"
 )
 
-type Promotion struct {
-	Id          int     `json:"id"`
-	Descripcion string  `json:"descripcion"`
-	Porcentaje  float32 `json:"porcentaje"`
-	FechaInicio string  `json:"fecha_inicio"`
-	FechaFin    string  `json:"fecha_fin"`
-}
-
-func InsertPromotion(descripcion string, porcentaje float32, fechaInicio string, fechaFin string, ctx *atreugo.RequestCtx) error {
+func CreatePromotion(descripcion string, porcentaje float32, fechaInicio string, fechaFin string) (string, int) {
 	db := database.GetConnection()
 	var promotionId int
 
@@ -24,20 +16,18 @@ func InsertPromotion(descripcion string, porcentaje float32, fechaInicio string,
 	if descripcion != "" && porcentaje > 0 && fechaInicio != "" && fechaFin != "" {
 		db.QueryRow(query).Scan(&promotionId)
 	} else {
-		return ctx.TextResponse("promocion no creada, todos los campos son obligatorios", http.StatusBadRequest)
+		return "promocion no creada, todos los campos son obligatorios", http.StatusBadRequest
 	}
 	if promotionId == 0 {
-
-		return ctx.TextResponse("promocion no creada", http.StatusBadRequest)
-
+		return "promocion no creada", http.StatusBadRequest
 	}
-	return ctx.TextResponse("promocion creada", http.StatusOK)
+	return "promocion creada", http.StatusOK
 }
 
-func GetPromotions(ctx *atreugo.RequestCtx) error {
+func GetPromotions() ([]structures.Promotion, int) {
 	db := database.GetConnection()
 
-	promociones := []Promotion{}
+	promotions := []structures.Promotion{}
 	query := "select id, descripcion, porcentaje, fecha_inicio, fecha_fin from promocion "
 	rows, err := db.Query(query)
 	if err != nil {
@@ -47,12 +37,11 @@ func GetPromotions(ctx *atreugo.RequestCtx) error {
 		if rows.Err() != nil {
 			fmt.Println(rows.Err())
 		}
-		p := Promotion{}
+		p := structures.Promotion{}
 		if err := rows.Scan(&p.Id, &p.Descripcion, &p.Porcentaje, &p.FechaInicio, &p.FechaFin); err != nil {
 			panic(err)
 		}
-		promociones = append(promociones, p)
+		promotions = append(promotions, p)
 	}
-	return ctx.JSONResponse(promociones)
-
+	return promotions, http.StatusOK
 }
