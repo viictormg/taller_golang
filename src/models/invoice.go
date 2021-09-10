@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"example.com/taller/src/database"
-	"github.com/savsgio/atreugo"
 )
 
 type Invoice struct {
@@ -17,29 +16,30 @@ type Invoice struct {
 	IdMedicamentos []int   `json:"id_medicamentos"`
 }
 
-func InsertInvoice(FechaCreacion string, PagoTotal float32, IdPromocion int, IdMedicamentos []int, ctx *atreugo.RequestCtx) error {
+func CreateInvoice(FechaCreacion string, PagoTotal float32, IdPromocion int, IdMedicamentos []int) (string, int) {
 	db := database.GetConnection()
 	var invoiceId int
-	var IdMedicamentosString string
-	IdMedicamentosString = "array["
+	query := fmt.Sprintf("insert into factura (fecha_creacion, pago_total, id_promocion) values ('%s', '%f', '%v') returning id", FechaCreacion, PagoTotal, IdPromocion)
 
-	for i := 0; i < len(IdMedicamentos); i++ {
-		coma := ","
-		if i == len(IdMedicamentos)-1 {
-			coma = ""
-		}
-		IdMedicamentosString += strconv.Itoa(IdMedicamentos[i]) + coma
-	}
-	IdMedicamentosString += "]"
-
-	query := fmt.Sprintf("insert into factura (fecha_creacion, pago_total, id_promocion, id_medicamentos) values ('%s', '%f', '%v', %s) returning id", FechaCreacion, PagoTotal, IdPromocion, IdMedicamentosString)
-
-	fmt.Println(query)
 	db.QueryRow(query).Scan(&invoiceId)
 
 	if invoiceId == 0 {
-		return ctx.TextResponse("medicamento no creado", http.StatusBadRequest)
-
+		return "medicamento no creado", http.StatusBadRequest
 	}
-	return ctx.TextResponse("medicamento creado", http.StatusOK)
+	createDetailInvoice(invoiceId, IdMedicamentos)
+	return "medicamento creado", http.StatusOK
+}
+
+func createDetailInvoice(invoiceId int, IdMedicamentos []int) {
+	db := database.GetConnection()
+	rows := ""
+	for index, value := range IdMedicamentos {
+		coma := ","
+		if index == (len(IdMedicamentos) - 1) {
+			coma = ""
+		}
+		rows += "(" + strconv.Itoa(value) + "," + strconv.Itoa(invoiceId) + ")" + coma
+	}
+	query := fmt.Sprintf("insert into detalle_factura (id_medicamento, id_factura) values %s", rows)
+	db.QueryRow(query)
 }
