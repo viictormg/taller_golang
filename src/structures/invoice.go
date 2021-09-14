@@ -7,3 +7,11 @@ type Invoice struct {
 	IdPromocion    int     `json:"id_promocion"`
 	IdMedicamentos []int   `json:"id_medicamentos"`
 }
+
+type InvoiceResponseGet struct {
+	Id             int
+	FechaCreacion  string
+	PagoTotal      float32
+	Promocion      Promotion
+	IdMedicamentos []Medicine
+}

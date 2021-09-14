@@ -11,6 +11,8 @@ func SetRouter(router *atreugo.Router) {
 	router.GET("/promocion", GetPromotions)
 	router.POST("/promocion", CreatePromotion)
 	//
+	router.GET("/factura", GetInvoice)
 	router.POST("/factura", CreateInvoice)
+	router.GET("/factura/simular", SimulateInvoice)
 
 }

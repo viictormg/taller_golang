@@ -13,7 +13,7 @@ import (
 
 func main() {
 	config := atreugo.Config{
-		Addr: "localhost:8000",
+		Addr: "localhost:9092",
 	}
 	server := atreugo.New(config)
 	router := server.NewGroupPath("/v1")
